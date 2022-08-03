@@ -65,14 +65,16 @@ class HandGestureThread(Thread):
             hands_result = self.hands.process(imgRGB)
             landmarks = hands_result.multi_hand_landmarks
 
-            info = dict()
+            info_list = []
             if landmarks: 
                 n_hands = len(landmarks)
                 for landmark in landmarks: 
+                    info = dict()
                     for i, name in enumerate(LANDMAKR_NAMES): 
                         x, y, z = landmark.landmark[i].x, landmark.landmark[i].y, landmark.landmark[i].z # landmarks[n - 1] for the nth hand
                         info[name] = (f'{x:.6}', f'{y:.6}', f'{z:.6}')
-            self.info = info
+                    info_list.append(info)
+            self.info = info_list
         
         log('HandGestureProcess.run() : stop the loop')
         self.cap.release()
@@ -98,14 +100,27 @@ class HandGesture():
         log('HandGesture.stop() is called')
         self.thread.stop()
     
+    def info_as_string(self): 
+        s = ''
+        
+        if self.info is None: 
+            return s
+        
+        '''
+        @separator
+         - ',' : between informations of each landmark
+         - '_' : between each landmark
+         - ':' : between each hand
+        '''
+        for info in self.info: # iterate on each hand
+            info_str = ''
+            for name, (x, y, z) in info.items(): 
+                s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
+            info_str = info_str[:-1] # remove the ending underscore
+            s += info_str + ':'
+        s = s[:-1] # remove the ending colon
+        return s
+    
     @property
     def info(self): 
         return self.thread.info
-
-def info_to_string(info: dict): 
-    s = ''
-    for name, (x, y, z) in info.items(): 
-        s += f'{name},{x:.5f},{y:.5f},{z:.5f}_' # separate by ',' and '_'
-    if s[-1] == '_': # remove the ending underscore
-        s = s[:-1]
-    return s
