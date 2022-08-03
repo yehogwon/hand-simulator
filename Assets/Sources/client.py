@@ -7,6 +7,7 @@ from utils import log
 HOST = '127.0.0.1' # localhost
 PORT = 10385
 
+# TODO: Implement the communication feature with c#
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     log('Waiting for connection...')
     s.connect((HOST, PORT))

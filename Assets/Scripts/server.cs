@@ -20,7 +20,7 @@ namespace Server {
             Socket socket = server.Accept();
             Console.WriteLine("Connected");
 
-            // TODO: Implement the communication feature between python
+            // TODO: Implement the communication feature with python
         }
     }
 }
