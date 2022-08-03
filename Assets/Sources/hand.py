@@ -115,7 +115,7 @@ class HandGesture():
         for info in self.info: # iterate on each hand
             info_str = ''
             for name, (x, y, z) in info.items(): 
-                s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
+                s += f'{name},{float(x):.5f},{float(y):.5f},{float(z):.5f}_'
             info_str = info_str[:-1] # remove the ending underscore
             s += info_str + ':'
         s = s[:-1] # remove the ending colon
