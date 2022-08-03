@@ -5,7 +5,7 @@ import time
 import mediapipe as mp
 import numpy as np
 
-landmark_names = [
+LANDMAKR_NAMES = [
     'WRIST', 
     'THUMB_CMC', 
     'THUMB_MCP', 
@@ -29,24 +29,59 @@ landmark_names = [
     'PINKY_TIP'
 ]
 
-wCam, hCam = 640, 360
+cap = None
+mpHands = None
+info = None
 
+def get_hand_info(landmarks): 
+    infos = dict()
+    if landmarks: 
+        for i, name in enumerate(LANDMAKR_NAMES): 
+            x, y, z = landmarks[0].landmark[i].x, landmarks[0].landmark[i].y, landmarks[0].landmark[i].z # landmarks[n - 1] for the nth hand
+            infos[name] = (x, y, z)
+    return infos
+
+def info_to_string(infos: dict): 
+    if infos is None: 
+        global info
+        return info
+    
+    s = ''
+    for name, (x, y, z) in infos.items(): 
+        s += f'{name},{x},{y},{z}_' # separate by ',' and '_'
+    if s[-1] == '_': # remove the ending underscore
+        s = s[:-1]
+    return s
+
+def init(w=640, h=360):
+    cap = cv2.VideoCapture(0)
+    cap.set(3, w)
+    cap.set(4, h)
+
+    mpHands = mp.solutions.hands
+    hands = mpHands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+
+def work(): 
+    assert(cap or mpHands or info, "init() has to be called first")
+
+    # TODO: Implement it using multiprocessing
+    while True: 
+        success, img = cap.read()
+        img = cv2.flip(img, 1)
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        hands_result = hands.process(imgRGB)
+        info = get_hand_info(hands_result.multi_hand_landmarks)
+
+'''
+Original Code: 
 cap = cv2.VideoCapture(0)
-cap.set(3, wCam)
-cap.set(4, hCam)
+cap.set(3, 640)
+cap.set(4, 360)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 mpDraw = mp.solutions.drawing_utils
-
-def show_hand_infos(landmarks): 
-    infos = dict()
-    if landmarks: 
-        for i, name in enumerate(landmark_names): 
-            x, y, z = landmarks[0].landmark[i].x, landmarks[0].landmark[i].y, landmarks[0].landmark[i].z # landmarks[n - 1] for the nth hand
-            print(f'{name}: X: {x}, Y: {y}, Z: {z}')
-            infos[name] = (x, y, z)
-    return infos
 
 pTime = 0
 while True: 
@@ -56,6 +91,7 @@ while True:
 
     hands_result = hands.process(imgRGB)
     show_hand_infos(hands_result.multi_hand_landmarks)
+
     if hands_result.multi_hand_landmarks: 
         for handLms in hands_result.multi_hand_landmarks: 
             for id, lm in enumerate(handLms.landmark): 
@@ -75,3 +111,4 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == 27: # Press esc to close the window
         break
+'''
