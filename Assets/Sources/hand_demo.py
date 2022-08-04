@@ -57,8 +57,13 @@ while True:
     info = get_hand_info(hands_result.multi_hand_landmarks)
     if len(info) > 0: 
         proc = hand.process(info)
-        d = {i: (proc[i], proc[i + 1]) for i in range(len(proc) // 2)}
-        utils.print_as_table(d)
+        # d = {i: (proc[i], proc[i + 1]) for i in range(len(proc) // 2)}
+        # utils.print_as_table(d)
+        for (x, y, z) in proc: 
+            if (x < 0 or y < 0): 
+                continue
+            print(x, y)
+            cv2.circle(img, (640 * x, 360 * y), 3, (255, 255, 0), cv2.FILLED)
 
     if hands_result.multi_hand_landmarks: 
         for handLms in hands_result.multi_hand_landmarks: 

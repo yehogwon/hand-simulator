@@ -25,11 +25,11 @@ public class ObjectControl : MonoBehaviour
 
     public void Modify(float[] data)
     {
-        // hand.transform.rotation = Quaternion.Euler(new Vector3(data[0], data[1], 0));
-        thumb.transform.rotation = Quaternion.Euler(new Vector3(data[2], data[3], 0));
-        index.transform.rotation = Quaternion.Euler(new Vector3(data[4], data[5], 0));
-        middle.transform.rotation = Quaternion.Euler(new Vector3(data[6], data[7], 0));
-        ring.transform.rotation = Quaternion.Euler(new Vector3(data[8], data[9], 0));
-        pinky.transform.rotation = Quaternion.Euler(new Vector3(data[10], data[11], 0));
+        hand.transform.rotation = Quaternion.Euler(new Vector3(data[0], data[1], 0));
+        thumb.transform.rotation = Quaternion.Euler(new Vector3(0, data[2], 0));
+        index.transform.rotation = Quaternion.Euler(new Vector3(0, data[3], 0));
+        middle.transform.rotation = Quaternion.Euler(new Vector3(0, data[4], 0));
+        ring.transform.rotation = Quaternion.Euler(new Vector3(0, data[5], 0));
+        pinky.transform.rotation = Quaternion.Euler(new Vector3(0, data[6], 0));
     }
 }

@@ -146,32 +146,22 @@ def process(info: dict):
     rotate_vector = vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
     _, theta, phi = cartesian_to_spherical(*rotate_vector)
 
-    # for the fingers
-    # fingers_pos = []
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_MCP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_TIP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_MCP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_TIP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_MCP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_TIP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_MCP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_TIP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_MCP']), -theta, -phi))
-    # fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_TIP']), -theta, -phi))
+    fingers_pos = []
+    fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_MCP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_TIP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_MCP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_TIP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_MCP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_TIP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_MCP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_TIP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_MCP']), -theta, -phi))
+    fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_TIP']), -theta, -phi))
     
     # fingers = [vector(fingers_pos[i], fingers_pos[i + 1]) for i in range(len(fingers_pos) // 2)]
     # angles = [theta, phi]
-    # angles += [item for tup in [cartesian_to_spherical(*v)[1:] for v in fingers] for item in tup]
 
-    angles = [[theta, phi]]
-    angles.append(cartesian_to_spherical(*vector(info['THUMB_MCP'], info['THUMB_TIP']))[1:])
-    angles.append(cartesian_to_spherical(*vector(info['INDEX_FINGER_MCP'], info['INDEX_FINGER_TIP']))[1:])
-    angles.append(cartesian_to_spherical(*vector(info['MIDDLE_FINGER_MCP'], info['MIDDLE_FINGER_TIP']))[1:])
-    angles.append(cartesian_to_spherical(*vector(info['RING_FINGER_MCP'], info['RING_FINGER_TIP']))[1:])
-    angles.append(cartesian_to_spherical(*vector(info['PINKY_MCP'], info['PINKY_TIP']))[1:])
-    angles = [item for tup in angles for item in tup]
-
-    return [round(f) for f in angles]
+    return fingers_pos
 
 def sin(x): # sin(x) for x in degree
     return math.sin(radian(x))
