@@ -26,10 +26,14 @@ public class Client : MonoBehaviour {
     void Update() {
         // TODO: Implement the communication feature with python
         try {
-            byte[] data = new byte[socket.Available]; 
-            int length = socket.Receive(data, data.Length, SocketFlags.None);
-            Array.Reverse(data);
-            Debug.Log(Encoding.UTF8.GetString(data));
+            byte[] raw_data = new byte[socket.Available]; 
+            int length = socket.Receive(raw_data, raw_data.Length, SocketFlags.None);
+            // Array.Reverse(raw_data);
+            
+            var data = new float[raw_data.Length / 4];
+            Buffer.BlockCopy(raw_data, 0, data, 0, raw_data.Length);
+
+            Debug.Log(data.Length.ToString() + " : " + string.Join(" ", data));
         } catch {
 
         }
