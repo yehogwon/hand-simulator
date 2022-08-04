@@ -9,7 +9,7 @@ using System.Net.Sockets;
 
 namespace Server {
     public class Program {
-       private static const int PORT = 10385;
+       private const int PORT = 10385;
 
         public static void Main(string[] args) {
             Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
