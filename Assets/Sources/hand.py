@@ -7,6 +7,7 @@ import numpy as np
 from threading import Thread
 import time
 import math
+from collections.abc import Iterable
 
 from utils import log
 
@@ -135,10 +136,8 @@ def dist2d(x1, y1, x2, y2):
 def dist3d(x1, y1, z1, x2, y2, z2): 
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
-# TODO: Develop the process mechanism
+# TODO: Set creteria for the hand-rotating -> set the creteria as a basis
 def process(info: dict): 
-    angles = []
-
     def to_position_vector(x, y): # x to y
         return tuple(map(lambda a, b: b - a, x, y))
     
@@ -155,6 +154,14 @@ def process(info: dict):
         ret_angles.append(math.acos(abs(np.dot(s1, s2)) / (np.linalg.norm(s1) * np.linalg.norm(s2))) * 57.2958)
 
         return ret_angles
+    
+    rotate_vector = to_position_vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
+    print(rotate_vector)
+    _, theta, phi = cartesian_to_spherical(*rotate_vector)
+    print(rotate(rotate_vector, theta, phi))
+    return
+
+    angles = []
 
     # for the fingers
     init_vector = to_position_vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
@@ -170,9 +177,48 @@ def process(info: dict):
     
     # return [round(f, 5) for f in angles]
 
+def degree(radian): 
+    return radian * 57.2958
+
+def radian(degree):
+    return degree / 57.2958
+
+# r: magnitude of the position vector, theta: angle measured from the y axis, phi: angle measured from the x axis
+def cartesian_to_spherical(x, y, z): 
+    r = math.sqrt(x ** 2 + y ** 2 + z ** 2)
+    theta = degree(math.acos(y / r))
+    phi = degree(math.atan(z / x))
+    return r, theta, phi
+
+def spherical_to_cartesian(r, theta, phi): # angles are in degree
+    x = r * math.sin(radian(theta)) * math.cos(radian(phi))
+    y = r * math.cos(radian(theta))
+    z = r * math.sin(radian(theta)) * math.sin(radian(phi))
+    return x, y, z
+
+# FIXME: rotate() function doesn't work properly
+def rotate(vec: Iterable, theta: float, phi: float): 
+    """
+    Rotate a vector by theta and phi
+    
+    :param vec: vector to be rotated (cartesian)
+    :param theta: angle in degree measured from the y axis (rotate on the xy plane)
+    :param phi: angle in degree measured from the x axis (rotate on the xz plane)
+    """
+    x, y, z = vec
+    # rotate by theta (axis: z)
+    _x = x * math.cos(radian(theta)) - y * math.sin(radian(theta))
+    _y = x * math.sin(radian(theta)) + y * math.cos(radian(theta))
+    _z = z
+    # rotate by phi (axis: y)
+    x = _x
+    y = _y * math.cos(radian(phi)) - _z * math.sin(radian(phi))
+    z = _y * math.sin(radian(phi)) + _z * math.cos(radian(phi))
+
+    return _x, _y, _z
+
 if __name__ == '__main__': 
-    hg = HandGesture()
-    hg.init_thread()
-    hg.start()
-
-
+    print(process({
+        'WRIST': (0.0, 0.0, 0.0),
+        'MIDDLE_FINGER_MCP': (3.0, 7.0, 9.0),
+    }))
