@@ -177,11 +177,17 @@ def process(info: dict):
     
     # return [round(f, 5) for f in angles]
 
+def sin(x): # sin(x) for x in degree
+    return math.sin(radian(x))
+
+def cos(x): # cos(x) for x in degree
+    return math.cos(radian(x))
+
 def degree(radian): 
-    return radian * 57.2958
+    return radian * 57.295779513082320876798154814105170332405472466564321549160243861
 
 def radian(degree):
-    return degree / 57.2958
+    return degree / 57.295779513082320876798154814105170332405472466564321549160243861
 
 # r: magnitude of the position vector, theta: angle measured from the y axis, phi: angle measured from the x axis
 def cartesian_to_spherical(x, y, z): 
@@ -191,12 +197,11 @@ def cartesian_to_spherical(x, y, z):
     return r, theta, phi
 
 def spherical_to_cartesian(r, theta, phi): # angles are in degree
-    x = r * math.sin(radian(theta)) * math.cos(radian(phi))
-    y = r * math.cos(radian(theta))
-    z = r * math.sin(radian(theta)) * math.sin(radian(phi))
+    x = r * sin(theta) * cos(phi)
+    y = r * cos(theta)
+    z = r * sin(theta) * sin(phi)
     return x, y, z
 
-# FIXME: rotate() function doesn't work properly
 def rotate(vec: Iterable, theta: float, phi: float): 
     """
     Rotate a vector by theta and phi
@@ -207,18 +212,15 @@ def rotate(vec: Iterable, theta: float, phi: float):
     """
     x, y, z = vec
     # rotate by theta (axis: z)
-    _x = x * math.cos(radian(theta)) - y * math.sin(radian(theta))
-    _y = x * math.sin(radian(theta)) + y * math.cos(radian(theta))
-    _z = z
+    x_ = x * cos(theta) - y * sin(theta)
+    y_ = x * sin(theta) + y * cos(theta)
+    z_ = z
     # rotate by phi (axis: y)
-    x = _x
-    y = _y * math.cos(radian(phi)) - _z * math.sin(radian(phi))
-    z = _y * math.sin(radian(phi)) + _z * math.cos(radian(phi))
+    x__ = x_ * cos(phi) - z_ * sin(phi)
+    y__ = y_
+    z__ = x_ * sin(phi) + z_ * cos(phi)
 
-    return _x, _y, _z
+    return x__, y__, z__
 
 if __name__ == '__main__': 
-    print(process({
-        'WRIST': (0.0, 0.0, 0.0),
-        'MIDDLE_FINGER_MCP': (3.0, 7.0, 9.0),
-    }))
+    print([round(x, 10) for x in rotate((1, 0, 0), 0, 90)])
