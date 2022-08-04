@@ -21,7 +21,15 @@ public class ObjectControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Transform t = pinky.transform;
-        pinky.transform.rotation = Quaternion.Euler(new Vector3(25, 50, 0));
+    }
+
+    public void Modify(float[] data)
+    {
+        hand.transform.rotation = Quaternion.Euler(new Vector3(data[0], data[1], data[2]));
+        thumb.transform.rotation = Quaternion.Euler(new Vector3(data[3], data[4], 0));
+        index.transform.rotation = Quaternion.Euler(new Vector3(data[5], data[6], 0));
+        middle.transform.rotation = Quaternion.Euler(new Vector3(data[7], data[8], 0));
+        ring.transform.rotation = Quaternion.Euler(new Vector3(data[9], data[10], 0));
+        pinky.transform.rotation = Quaternion.Euler(new Vector3(data[11], data[12], 0));
     }
 }

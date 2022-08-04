@@ -24,7 +24,6 @@ public class Client : MonoBehaviour {
     }
 
     void Update() {
-        // TODO: Implement the communication feature with python
         try {
             byte[] raw_data = new byte[socket.Available]; 
             int length = socket.Receive(raw_data, raw_data.Length, SocketFlags.None);
@@ -34,6 +33,8 @@ public class Client : MonoBehaviour {
             Buffer.BlockCopy(raw_data, 0, data, 0, raw_data.Length);
 
             Debug.Log(data.Length.ToString() + " : " + string.Join(" ", data));
+
+            gameObject.GetComponent<ObjectControl>().Modify(data);
         } catch {
 
         }
