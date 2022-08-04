@@ -22,6 +22,6 @@ public class ObjectControl : MonoBehaviour
     void Update()
     {
         Transform t = pinky.transform;
-        pinky.transform.Rotate(t.rotation.x, t.rotation.y + 1, t.rotation.z);
+        pinky.transform.rotation = Quaternion.Euler(new Vector3(25, 50, 0));
     }
 }

@@ -8,9 +8,12 @@ HOST = '127.0.0.1' # localhost
 PORT = 10385
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    log('Waiting for connection...')
-    s.connect((HOST, PORT))
-    log('Server connected!')
+    log('Waiting for the connection...')
+    s.bind((HOST, PORT))
+    s.listen()
+    conn, addr = s.accept()
+    print(addr)
+    log('Server connected:', str(addr))
 
     hg = hand.HandGesture()
     hg.init_thread()
@@ -20,7 +23,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try: 
             data = hand.process(hg.info)
             log('Sending:', data[:100] + ' ...' if len(data) > 100 else data)
-            s.send(bytes(data, 'utf-8'))
+            conn.send(bytes(data, 'utf-8'))
             time.sleep(0.05)
         except: 
             break
