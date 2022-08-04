@@ -3,6 +3,7 @@ import time
 import mediapipe as mp
 
 import utils
+import hand
 
 LANDMAKR_NAMES = [
     'WRIST', 
@@ -52,7 +53,10 @@ while True:
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     hands_result = hands.process(imgRGB)
-    utils.print_as_table(get_hand_info(hands_result.multi_hand_landmarks, proc=lambda x: float(f'{x:.3f}')))
+    # utils.print_as_table(get_hand_info(hands_result.multi_hand_landmarks, proc=lambda x: float(f'{x:.3f}')))
+    info = get_hand_info(hands_result.multi_hand_landmarks)
+    if len(info) > 0: 
+        hand.process(info)
 
     if hands_result.multi_hand_landmarks: 
         for handLms in hands_result.multi_hand_landmarks: 

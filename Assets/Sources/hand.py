@@ -2,6 +2,7 @@
 
 import cv2
 import mediapipe as mp
+import numpy as np
 
 from threading import Thread
 import time
@@ -134,47 +135,44 @@ def dist2d(x1, y1, x2, y2):
 def dist3d(x1, y1, z1, x2, y2, z2): 
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
+# TODO: Develop the process mechanism
 def process(info: dict): 
-    def rot_x(a, b, c=None): 
-        if c is None: 
-            return math.atan2(abs(a[1] - b[1]), abs(a[2] - b[2])) * 57.2958
-        mid = tuple(map(lambda x, y: (x + y) / 2, b, c))
-        return math.atan2(abs(a[1] - mid[1]), abs(a[2] - mid[2])) * 57.2958
-
-    def rot_y(a, b): 
-        return math.atan2(abs(a[1] - b[1]), abs(a[0] - b[0])) * 57.2958
-    
-    def rot_z(a, b): 
-        return math.atan2(abs(a[0] - b[0]), abs(a[2] - b[2])) * 57.2958
-
     angles = []
 
-    # the whole hand
-    angles.append(rot_x(info['WRIST'], info['MIDDLE_FINGER_MCP'], info['RING_FINGER_MCP'])) # hand x
-    angles.append(rot_y(info['WRIST'], info['THUMB_MCP'])) # hand y
-    angles.append(rot_z(info['INDEX_FINGER_MCP'], info['PINKY_MCP'])) # hand z
+    def to_position_vector(x, y): # x to y
+        return tuple(map(lambda a, b: b - a, x, y))
+    
+    def get_angles(v1, v2): # takes two vectors, returns angles (degree)
+        ret_angles = []
 
-    # the thumb
-    angles.append(rot_x(info['THUMB_TIP'], info['THUMB_MCP'])) # thumb x
-    angles.append(rot_y(info['THUMB_TIP'], info['THUMB_MCP'])) # thumb y
+        s1, s2 = [v1[0], v1[1]], [v2[0], v2[1]]
+        ret_angles.append(math.acos(abs(np.dot(s1, s2)) / (np.linalg.norm(s1) * np.linalg.norm(s2))) * 57.2958)
 
-    # the index finger
-    angles.append(rot_x(info['INDEX_FINGER_TIP'], info['INDEX_FINGER_MCP'])) # index x
-    angles.append(rot_y(info['INDEX_FINGER_TIP'], info['INDEX_FINGER_MCP'])) # index y
+        s1, s2 = [v1[0], v1[2]], [v2[0], v2[2]]
+        ret_angles.append(math.acos(abs(np.dot(s1, s2)) / (np.linalg.norm(s1) * np.linalg.norm(s2))) * 57.2958)
+
+        s1, s2 = [v1[1], v1[2]], [v2[1], v2[2]]
+        ret_angles.append(math.acos(abs(np.dot(s1, s2)) / (np.linalg.norm(s1) * np.linalg.norm(s2))) * 57.2958)
+
+        return ret_angles
+
+    # for the fingers
+    init_vector = to_position_vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
+    thumb_vector = to_position_vector(info['THUMB_MCP'], info['THUMB_TIP'])
+    index_vector = to_position_vector(info['INDEX_FINGER_MCP'], info['INDEX_FINGER_TIP'])
+    middle_vector = to_position_vector(info['MIDDLE_FINGER_MCP'], info['MIDDLE_FINGER_TIP'])
+    ring_vector = to_position_vector(info['RING_FINGER_MCP'], info['RING_FINGER_TIP'])
+    pinky_vector = to_position_vector(info['PINKY_MCP'], info['PINKY_TIP'])
     
-    # the middle finger
-    angles.append(rot_x(info['MIDDLE_FINGER_TIP'], info['MIDDLE_FINGER_MCP'])) # middle x
-    angles.append(rot_y(info['MIDDLE_FINGER_TIP'], info['MIDDLE_FINGER_MCP'])) # middle y
+    # angles.append()
+    angles.append(get_angles(init_vector, thumb_vector))
+    print(angles[0])
     
-    # the ring finger
-    angles.append(rot_x(info['RING_FINGER_TIP'], info['RING_FINGER_MCP'])) # ring x
-    angles.append(rot_y(info['RING_FINGER_TIP'], info['RING_FINGER_MCP'])) # ring y
-    
-    # the pinky
-    angles.append(rot_x(info['PINKY_TIP'], info['PINKY_MCP'])) # pinky x
-    angles.append(rot_y(info['PINKY_TIP'], info['PINKY_MCP'])) # pinky y
-    
-    return [round(f, 5) for f in angles]
+    # return [round(f, 5) for f in angles]
 
 if __name__ == '__main__': 
-    process({'MIDDLE_FINGER_MCP': (1, 2, 3), 'RING_FINGER_MCP': (4, 5, 6)})
+    hg = HandGesture()
+    hg.init_thread()
+    hg.start()
+
+

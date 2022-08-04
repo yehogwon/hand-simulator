@@ -190,7 +190,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c3ccc04c137b34e939f40bd7190441c8, type: 2}
+  - {fileID: 2100000, guid: ea0f99a8b643749868fbda2f4ca211ee, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -463,7 +463,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c3ccc04c137b34e939f40bd7190441c8, type: 2}
+  - {fileID: 2100000, guid: c2ad492ce6de042888eb26786e93222b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -759,7 +759,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 935974812}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.02000004, y: 0.044999957, z: 0.683}
+  m_LocalPosition: {x: -0.02000004, y: 0.044999957, z: 0.75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1210,13 +1210,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d5ac87f8ca384df9b5617f3bdd1d827, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hand: {fileID: 0}
-  palm: {fileID: 0}
-  thumb: {fileID: 0}
-  index: {fileID: 0}
-  middle: {fileID: 0}
-  ring: {fileID: 0}
-  pinky: {fileID: 0}
 --- !u!1 &1648359312
 GameObject:
   m_ObjectHideFlags: 0
