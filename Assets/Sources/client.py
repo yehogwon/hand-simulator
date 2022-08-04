@@ -18,7 +18,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     
     while True:
         try: 
-            data = hg.info_as_string()
+            data = hand.process(hg.info)
             log('Sending:', data[:100] + ' ...' if len(data) > 100 else data)
             s.send(bytes(data, 'utf-8'))
             time.sleep(0.05)

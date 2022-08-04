@@ -5,6 +5,7 @@ import mediapipe as mp
 
 from threading import Thread
 import time
+import math
 
 from utils import log
 
@@ -72,7 +73,7 @@ class HandGestureThread(Thread):
                     info = dict()
                     for i, name in enumerate(LANDMAKR_NAMES): 
                         x, y, z = landmark.landmark[i].x, landmark.landmark[i].y, landmark.landmark[i].z # landmarks[n - 1] for the nth hand
-                        info[name] = (f'{x:.6}', f'{y:.6}', f'{z:.6}')
+                        info[name] = (round(x, 6), round(y, 6), round(z, 6))
                     info_list.append(info)
             self.info = info_list
         
@@ -115,7 +116,7 @@ class HandGesture():
         for info in self.info: # iterate on each hand
             info_str = ''
             for name, (x, y, z) in info.items(): 
-                s += f'{name},{float(x):.5f},{float(y):.5f},{float(z):.5f}_'
+                s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
             info_str = info_str[:-1] # remove the ending underscore
             s += info_str + ':'
         s = s[:-1] # remove the ending colon
@@ -124,3 +125,87 @@ class HandGesture():
     @property
     def info(self): 
         return self.thread.info
+
+def dist2d(x1, y1, x2, y2): 
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+def dist3d(x1, y1, z1, x2, y2, z2): 
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
+
+def process(info: dict): 
+    re_info = {
+        'wrist': info['WRIST'], 
+        'thumb_tip': info['THUMB_TIP'],
+        'thumb_mcp': info['THUMB_MCP'],
+        'thumb_cmc': info['THUMB_CMC'],
+        'index_tip': info['INDEX_FINGER_TIP'],
+        'index_mcp': info['INDEX_FINGER_MCP'],
+        'middle_tip': info['MIDDLE_FINGER_TIP'],
+        'middle_mcp': info['MIDDLE_FINGER_MCP'],
+        'ring_tip': info['RING_FINGER_TIP'],
+        'ring_mcp': info['RING_FINGER_MCP'],
+        'pinky_tip': info['PINKY_TIP'],
+        'pinky_mcp': info['PINKY_MCP']
+    }
+
+    def rot_x(a, b, c=None): 
+        if c is None: 
+            return math.atan2(abs(a[1] - b[1]), abs(a[2] - b[2])) * 57.2958
+        mid = tuple(map(lambda x, y: (x + y) / 2, b, c))
+        return math.atan2(abs(a[1] - mid[1]), abs(a[2] - mid[2])) * 57.2958
+
+    def rot_y(a, b): 
+        return math.atan2(abs(a[1] - b[1]), abs(a[0] - b[0])) * 57.2958
+    
+    def rot_z(a, b): 
+        return math.atan2(abs(a[0] - b[0]), abs(a[2] - b[2])) * 57.2958
+
+    angles = []
+
+    # the whole hand
+    hand_x = rot_x(re_info['wrist'], re_info['middle_mcp'], re_info['ring_mcp'])
+    hand_y = rot_y(re_info['wrist'], re_info['thumb_mcp'])
+    hand_z = rot_z(re_info['index_mcp'], re_info['pinky_mcp'])
+
+    # the thumb
+    thumb_x = rot_x(re_info('thumb_tip'), re_info('thumb_mcp'))
+    thumb_y = rot_y(re_info('thumb_tip'), re_info('thumb_mcp'))
+
+    # the index finger
+    index_x = rot_x(re_info('index_tip'), re_info('index_mcp'))
+    index_y = rot_y(re_info('index_tip'), re_info('index_mcp'))
+    
+    # the middle finger
+    middle_x = rot_x(re_info('middle_tip'), re_info('middle_mcp'))
+    middle_y = rot_y(re_info('middle_tip'), re_info('middle_mcp'))
+    
+    # the ring finger
+    ring_x = rot_x(re_info('ring_tip'), re_info('ring_mcp'))
+    ring_y = rot_y(re_info('ring_tip'), re_info('ring_mcp'))
+    
+    # the pinky
+    pinky_x = rot_x(re_info('pinky_tip'), re_info('pinky_mcp'))
+    pinky_y = rot_y(re_info('pinky_tip'), re_info('pinky_mcp'))
+    
+    angles.append(hand_x)
+    angles.append(hand_y)
+    angles.append(hand_z)
+    angles.append(thumb_x)
+    angles.append(thumb_y)
+    angles.append(index_x)
+    angles.append(index_y)
+    angles.append(middle_x)
+    angles.append(middle_y)
+    angles.append(ring_x)
+    angles.append(ring_y)
+    angles.append(pinky_x)
+    angles.append(pinky_y)
+
+    s = ''
+    for angle in angles: 
+        s += f'{angle:.5f},'
+    s = s[:-1] # remove the ending comma
+    return s
+
+if __name__ == '__main__': 
+    process({'MIDDLE_FINGER_MCP': (1, 2, 3), 'RING_FINGER_MCP': (4, 5, 6)})
