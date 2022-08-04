@@ -56,7 +56,6 @@ class HandGestureThread(Thread):
     def run(self): 
         log('HandGestureThread.run() is called')
         
-        self.flag = True
         log('HandGestureThread.run() : start the loop')
         while self.flag: 
             success, img = self.cap.read()
@@ -101,10 +100,13 @@ class HandGesture():
         log('HandGesture.stop() is called')
         self.thread.stop()
     
-    def info_as_string(self): 
-        s = ''
+    def info_as_list(self): 
+        s = []
         
         if self.info is None: 
+            return s
+        
+        if len(self.info) == 0:
             return s
         
         '''
@@ -114,12 +116,12 @@ class HandGesture():
          - ':' : between each hand
         '''
         for info in self.info: # iterate on each hand
-            info_str = ''
-            for name, (x, y, z) in info.items(): 
-                s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
-            info_str = info_str[:-1] # remove the ending underscore
-            s += info_str + ':'
-        s = s[:-1] # remove the ending colon
+            # info_str = ''
+            # for name, (x, y, z) in info.items(): 
+            #     s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
+            # info_str = info_str[:-1] # remove the ending underscore
+            info_list = process(info)
+            s.append(info_list)
         return s
     
     @property
@@ -133,21 +135,6 @@ def dist3d(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
 def process(info: dict): 
-    re_info = {
-        'wrist': info['WRIST'], 
-        'thumb_tip': info['THUMB_TIP'],
-        'thumb_mcp': info['THUMB_MCP'],
-        'thumb_cmc': info['THUMB_CMC'],
-        'index_tip': info['INDEX_FINGER_TIP'],
-        'index_mcp': info['INDEX_FINGER_MCP'],
-        'middle_tip': info['MIDDLE_FINGER_TIP'],
-        'middle_mcp': info['MIDDLE_FINGER_MCP'],
-        'ring_tip': info['RING_FINGER_TIP'],
-        'ring_mcp': info['RING_FINGER_MCP'],
-        'pinky_tip': info['PINKY_TIP'],
-        'pinky_mcp': info['PINKY_MCP']
-    }
-
     def rot_x(a, b, c=None): 
         if c is None: 
             return math.atan2(abs(a[1] - b[1]), abs(a[2] - b[2])) * 57.2958
@@ -163,49 +150,31 @@ def process(info: dict):
     angles = []
 
     # the whole hand
-    hand_x = rot_x(re_info['wrist'], re_info['middle_mcp'], re_info['ring_mcp'])
-    hand_y = rot_y(re_info['wrist'], re_info['thumb_mcp'])
-    hand_z = rot_z(re_info['index_mcp'], re_info['pinky_mcp'])
+    angles.append(rot_x(info['WRIST'], info['MIDDLE_FINGER_MCP'], info['RING_FINGER_MCP'])) # hand x
+    angles.append(rot_y(info['WRIST'], info['THUMB_MCP'])) # hand y
+    angles.append(rot_z(info['INDEX_FINGER_MCP'], info['PINKY_MCP'])) # hand z
 
     # the thumb
-    thumb_x = rot_x(re_info('thumb_tip'), re_info('thumb_mcp'))
-    thumb_y = rot_y(re_info('thumb_tip'), re_info('thumb_mcp'))
+    angles.append(rot_x(info['THUMB_TIP'], info['THUMB_MCP'])) # thumb x
+    angles.append(rot_y(info['THUMB_TIP'], info['THUMB_MCP'])) # thumb y
 
     # the index finger
-    index_x = rot_x(re_info('index_tip'), re_info('index_mcp'))
-    index_y = rot_y(re_info('index_tip'), re_info('index_mcp'))
+    angles.append(rot_x(info['INDEX_FINGER_TIP'], info['INDEX_FINGER_MCP'])) # index x
+    angles.append(rot_y(info['INDEX_FINGER_TIP'], info['INDEX_FINGER_MCP'])) # index y
     
     # the middle finger
-    middle_x = rot_x(re_info('middle_tip'), re_info('middle_mcp'))
-    middle_y = rot_y(re_info('middle_tip'), re_info('middle_mcp'))
+    angles.append(rot_x(info['MIDDLE_FINGER_TIP'], info['MIDDLE_FINGER_MCP'])) # middle x
+    angles.append(rot_y(info['MIDDLE_FINGER_TIP'], info['MIDDLE_FINGER_MCP'])) # middle y
     
     # the ring finger
-    ring_x = rot_x(re_info('ring_tip'), re_info('ring_mcp'))
-    ring_y = rot_y(re_info('ring_tip'), re_info('ring_mcp'))
+    angles.append(rot_x(info['RING_FINGER_TIP'], info['RING_FINGER_MCP'])) # ring x
+    angles.append(rot_y(info['RING_FINGER_TIP'], info['RING_FINGER_MCP'])) # ring y
     
     # the pinky
-    pinky_x = rot_x(re_info('pinky_tip'), re_info('pinky_mcp'))
-    pinky_y = rot_y(re_info('pinky_tip'), re_info('pinky_mcp'))
+    angles.append(rot_x(info['PINKY_TIP'], info['PINKY_MCP'])) # pinky x
+    angles.append(rot_y(info['PINKY_TIP'], info['PINKY_MCP'])) # pinky y
     
-    angles.append(hand_x)
-    angles.append(hand_y)
-    angles.append(hand_z)
-    angles.append(thumb_x)
-    angles.append(thumb_y)
-    angles.append(index_x)
-    angles.append(index_y)
-    angles.append(middle_x)
-    angles.append(middle_y)
-    angles.append(ring_x)
-    angles.append(ring_y)
-    angles.append(pinky_x)
-    angles.append(pinky_y)
-
-    s = ''
-    for angle in angles: 
-        s += f'{angle:.5f},'
-    s = s[:-1] # remove the ending comma
-    return s
+    return [round(f, 5) for f in angles]
 
 if __name__ == '__main__': 
     process({'MIDDLE_FINGER_MCP': (1, 2, 3), 'RING_FINGER_MCP': (4, 5, 6)})
