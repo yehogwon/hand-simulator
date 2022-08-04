@@ -32,7 +32,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             log('Sending:', str(send_data)[:100] + ' ...' if len(str(send_data)) > 100 else str(send_data))
             conn.send(send_data)
             time.sleep(0.05)
-        except Exception as e: 
+        except: 
             traceback.print_exc()
             break
     hg.stop()

@@ -8,7 +8,7 @@ def log(*s: str):
 def print_as_table(d: dict): 
     if d is None: 
         return
-    df = pd.DataFrame(index=d.keys(), columns=['x', 'y', 'z'], data=[[d[k][0], d[k][1], d[k][2]] for k in d.keys()])
+    df = pd.DataFrame(index=d.keys(), data=[[d[k][0], d[k][1]] for k in d.keys()])
     print(df)
 
 if __name__ == '__main__': 

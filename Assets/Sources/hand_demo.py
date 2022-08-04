@@ -56,7 +56,9 @@ while True:
     # utils.print_as_table(get_hand_info(hands_result.multi_hand_landmarks, proc=lambda x: float(f'{x:.3f}')))
     info = get_hand_info(hands_result.multi_hand_landmarks)
     if len(info) > 0: 
-        hand.process(info)
+        proc = hand.process(info)
+        d = {i: (proc[i], proc[i + 1]) for i in range(len(proc) // 2)}
+        utils.print_as_table(d)
 
     if hands_result.multi_hand_landmarks: 
         for handLms in hands_result.multi_hand_landmarks: 
