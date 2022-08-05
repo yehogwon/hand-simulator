@@ -72,13 +72,14 @@ class HandGestureThread(Thread):
             info_list = []
             if landmarks: 
                 n_hands = len(landmarks)
-                for landmark in landmarks: 
-                    info = dict()
+                for multi_hand, landmark in zip(hands_result.multi_handedness, landmarks): 
+                    info = {'class': multi_hand.classification[0].label.lower()}
                     for i, name in enumerate(LANDMAKR_NAMES): 
                         x, y, z = landmark.landmark[i].x, landmark.landmark[i].y, landmark.landmark[i].z # landmarks[n - 1] for the nth hand
                         info[name] = (round(x, 6), round(y, 6), round(z, 6))
                     info_list.append(info)
             self.info = info_list
+            time.sleep(0.01)
         
         log('HandGestureProcess.run() : stop the loop')
         self.cap.release()
@@ -104,8 +105,8 @@ class HandGesture():
         log('HandGesture.stop() is called')
         self.thread.stop()
     
-    def info_as_list(self): 
-        s = []
+    def process_info(self): 
+        s = dict()
         
         if self.info is None: 
             return s
@@ -120,12 +121,8 @@ class HandGesture():
          - ':' : between each hand
         '''
         for info in self.info: # iterate on each hand
-            # info_str = ''
-            # for name, (x, y, z) in info.items(): 
-            #     s += f'{name},{x:.5f},{y:.5f},{z:.5f}_'
-            # info_str = info_str[:-1] # remove the ending underscore
             info_list = process(info)
-            s.append(info_list)
+            s[info['class']] = info_list
         return s
     
     @property
@@ -146,22 +143,28 @@ def process(info: dict):
     rotate_vector = vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
     _, theta, phi = cartesian_to_spherical(*rotate_vector)
 
-    fingers_pos = []
-    fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_MCP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['THUMB_TIP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_MCP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['INDEX_FINGER_TIP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_MCP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['MIDDLE_FINGER_TIP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_MCP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['RING_FINGER_TIP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_MCP']), -theta, -phi))
-    fingers_pos.append(rotate(vector(info['WRIST'], info['PINKY_TIP']), -theta, -phi))
-    
-    # fingers = [vector(fingers_pos[i], fingers_pos[i + 1]) for i in range(len(fingers_pos) // 2)]
-    # angles = [theta, phi]
+    d_theta = 90 - theta
+    d_phi = -phi
 
-    return fingers_pos
+    origin_vector = rotate(info['WRIST'], d_theta, d_phi)
+
+    fingers_pos = []
+    fingers_pos.append(rotate(info['THUMB_MCP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['THUMB_TIP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['INDEX_FINGER_MCP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['INDEX_FINGER_TIP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['MIDDLE_FINGER_MCP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['MIDDLE_FINGER_TIP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['RING_FINGER_MCP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['RING_FINGER_TIP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['PINKY_MCP'], d_theta, d_phi))
+    fingers_pos.append(rotate(info['PINKY_TIP'], d_theta, d_phi))
+    fingers_pos.append(origin_vector)
+
+    fingers_pos_proc = [vector(origin_vector, vec) for vec in fingers_pos]
+    proc = [item for tup in fingers_pos_proc for item in tup]
+
+    return proc
 
 def sin(x): # sin(x) for x in degree
     return math.sin(radian(x))
@@ -178,8 +181,13 @@ def radian(degree):
 # r: magnitude of the position vector, theta: angle measured from the y axis, phi: angle measured from the x axis
 def cartesian_to_spherical(x, y, z): 
     r = math.sqrt(x ** 2 + y ** 2 + z ** 2)
+    # theta = degree(math.acos(y / r))
+    # phi = degree(math.atan2(z, x))
     theta = degree(math.acos(y / r))
-    phi = degree(math.atan2(z, x))
+    if x == 0: 
+        phi = 90
+    else: 
+        phi = degree(math.atan2(z, x))
     return r, theta, phi
 
 def spherical_to_cartesian(r, theta, phi): # angles are in degree
@@ -193,8 +201,6 @@ def rotate(vec: Iterable, theta: float, phi: float):
     return spherical_to_cartesian(r, theta_ + theta, phi_ + phi)
 
 if __name__ == '__main__': 
-    print([round(x, 10) for x in rotate((1, 1, 1), 45, 45)])
-    print(process({
-        'WRIST': (0.0, 0.0, 0.0),
-        'MIDDLE_FINGER_MCP': (3.0, 7.0, 9.0),
-    }))
+    vec = (5, 0, 8)
+    theta, phi = 90, 0
+    print(tuple(map(lambda x: round(x, 3), rotate(vec, theta, phi))))

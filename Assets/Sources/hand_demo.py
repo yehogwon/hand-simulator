@@ -30,17 +30,22 @@ LANDMAKR_NAMES = [
 ]
 
 def get_hand_info(landmarks, proc=lambda x: x): 
-    infos = dict()
+    info = dict()
     if landmarks: 
         n_hands = len(landmarks)
         for i, name in enumerate(LANDMAKR_NAMES): 
             x, y, z = landmarks[0].landmark[i].x, landmarks[0].landmark[i].y, landmarks[0].landmark[i].z # landmarks[n - 1] for the nth hand
-            infos[name] = (proc(x), proc(y), proc(z))
-    return infos
+            info[name] = (proc(x), proc(y), proc(z))
+    return info
+
+def show_info(info): 
+    for k, v in info.items():
+        coord = (round(x, 2) for x in v)
+        print(k, ':', ', '.join(map(str, coord)))
 
 cap = cv2.VideoCapture(0)
-cap.set(3, 640)
-cap.set(4, 360)
+cap.set(3, 320)
+cap.set(4, 180)
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(static_image_mode=False, max_num_hands=4, min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -53,17 +58,10 @@ while True:
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     hands_result = hands.process(imgRGB)
-    # utils.print_as_table(get_hand_info(hands_result.multi_hand_landmarks, proc=lambda x: float(f'{x:.3f}')))
     info = get_hand_info(hands_result.multi_hand_landmarks)
-    if len(info) > 0: 
-        proc = hand.process(info)
-        # d = {i: (proc[i], proc[i + 1]) for i in range(len(proc) // 2)}
-        # utils.print_as_table(d)
-        for (x, y, z) in proc: 
-            if (x < 0 or y < 0): 
-                continue
-            print(x, y)
-            cv2.circle(img, (640 * x, 360 * y), 3, (255, 255, 0), cv2.FILLED)
+    if (len(info) > 0): 
+        info_proc = [round(x, 2) for x in hand.process(info)]
+        print(info_proc[-10:-1])
 
     if hands_result.multi_hand_landmarks: 
         for handLms in hands_result.multi_hand_landmarks: 
