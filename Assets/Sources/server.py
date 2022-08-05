@@ -25,10 +25,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try: 
             if hg.info is None: 
                 continue
-            data = hg.info_as_list()
-            if len(data) == 0: 
+            # data = hg.info_as_list()
+            # if len(data) == 0: 
+            #     continue
+            # send_data = struct.pack(f'<{len(data[0])}f', *data[0])
+            if len(hg.info) == 0: 
                 continue
-            send_data = struct.pack(f'<{len(data[0])}f', *data[0])
+            data = list(hg.info[0].values()) # list of tuples
+            data = [round((item - 1) * 3, 5) for tup in data for item in tup]
+            send_data = struct.pack(f'<{len(data)}f', *data)
             log('Sending:', str(send_data)[:100] + ' ...' if len(str(send_data)) > 100 else str(send_data))
             conn.send(send_data)
             time.sleep(0.05)

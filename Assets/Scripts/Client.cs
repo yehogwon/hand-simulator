@@ -34,7 +34,7 @@ public class Client : MonoBehaviour {
 
             Debug.Log(data.Length.ToString() + " : " + string.Join(" ", data));
 
-            gameObject.GetComponent<ObjectControl>().Modify(data);
+            gameObject.GetComponent<ObjectControl>().ModifyForDots(data);
         } catch {
 
         }
