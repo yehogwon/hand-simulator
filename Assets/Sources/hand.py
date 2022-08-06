@@ -75,7 +75,7 @@ class HandGestureThread(Thread):
                 for multi_hand, landmark in zip(hands_result.multi_handedness, landmarks): 
                     info = {'class': multi_hand.classification[0].label.lower()}
                     for i, name in enumerate(LANDMAKR_NAMES): 
-                        x, y, z = landmark.landmark[i].x, landmark.landmark[i].y, landmark.landmark[i].z # landmarks[n - 1] for the nth hand
+                        x, y, z = landmark.landmark[i].x, 1 - landmark.landmark[i].y, landmark.landmark[i].z # landmarks[n - 1] for the nth hand
                         info[name] = (round(x, 6), round(y, 6), round(z, 6))
                     info_list.append(info)
             self.info = info_list
@@ -135,32 +135,47 @@ def dist2d(x1, y1, x2, y2):
 def dist3d(x1, y1, z1, x2, y2, z2): 
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
 
-# FIXME: Solve the problems on process()
 def process(info: dict): 
     def vector(x, y): # x to y
         return tuple(map(lambda a, b: b - a, x, y))
     
-    rotate_vector = vector(info['WRIST'], info['MIDDLE_FINGER_MCP'])
-    _, theta, phi = cartesian_to_spherical(*rotate_vector)
+    def angle(v1, v2): 
+        return math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+    
+    origin_vector = info['WRIST']
 
-    d_theta = 90 - theta
-    d_phi = -phi
+    d1 = dist2d(*info['RING_FINGER_MCP'][:2], *info['INDEX_FINGER_MCP'][:2])
+    d1_x = info['RING_FINGER_MCP'][0] - info['INDEX_FINGER_MCP'][0]
+    d1_y = info['RING_FINGER_MCP'][1] - info['INDEX_FINGER_MCP'][1]
 
-    origin_vector = rotate(info['WRIST'], d_theta, d_phi)
+    d2 = dist2d(*info['WRIST'][1:], *info['THUMB_CMC'][1:])
+    d2_y = info['WRIST'][1] - info['THUMB_CMC'][1]
+    d2_z = info['WRIST'][2] - info['THUMB_CMC'][2]
+
+    theta_xy = -degree(math.acos(d1_x / d1)) * math.copysign(1, d1_y)
+    theta_yz = degree(math.acos(d2_z / d2)) * math.copysign(1, d2_y) + 90
+
+    print(theta_xy, theta_yz)
 
     fingers_pos = []
-    fingers_pos.append(rotate(info['THUMB_MCP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['THUMB_TIP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['INDEX_FINGER_MCP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['INDEX_FINGER_TIP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['MIDDLE_FINGER_MCP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['MIDDLE_FINGER_TIP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['RING_FINGER_MCP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['RING_FINGER_TIP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['PINKY_MCP'], d_theta, d_phi))
-    fingers_pos.append(rotate(info['PINKY_TIP'], d_theta, d_phi))
+    fingers_pos.append(info['THUMB_MCP'])
+    fingers_pos.append(info['THUMB_TIP'])
+    fingers_pos.append(info['INDEX_FINGER_MCP'])
+    fingers_pos.append(info['INDEX_FINGER_TIP'])
+    fingers_pos.append(info['MIDDLE_FINGER_MCP'])
+    fingers_pos.append(info['MIDDLE_FINGER_TIP'])
+    fingers_pos.append(info['RING_FINGER_MCP'])
+    fingers_pos.append(info['RING_FINGER_TIP'])
+    fingers_pos.append(info['PINKY_MCP'])
+    fingers_pos.append(info['PINKY_TIP'])
+    
+    # FIXME: Resolve some errors during the rotations
+    for i, finger in enumerate(fingers_pos): 
+        rot_xy = rotate_about(finger[:2], theta_xy, origin_vector[:2]) + (finger[2],)
+        rot_yz = (rot_xy[0],) + rotate_about(rot_xy[1:], theta_yz, origin_vector[1:])
+        fingers_pos[i] = rot_yz
+    
     fingers_pos.append(origin_vector)
-
     fingers_pos_proc = [vector(origin_vector, vec) for vec in fingers_pos]
     proc = [item for tup in fingers_pos_proc for item in tup]
 
@@ -200,7 +215,11 @@ def rotate(vec: Iterable, theta: float, phi: float):
     r, theta_, phi_ = cartesian_to_spherical(*vec)
     return spherical_to_cartesian(r, theta_ + theta, phi_ + phi)
 
+def rotate_about(vec: Iterable, theta: float, origin: Iterable=(0, 0)): 
+    assert len(vec) == 2 and len(vec) == 2, "plane_vector() requires 2-dim vectors, but got vectors of strange shape. " 
+    mat = np.array([[cos(theta), -sin(theta)], [sin(theta), cos(theta)]])
+    mat_v = np.array([vec[0] - origin[0], vec[1] - origin[1]])
+    return tuple(np.dot(mat, mat_v) + origin)
+
 if __name__ == '__main__': 
-    vec = (5, 0, 8)
-    theta, phi = 90, 0
-    print(tuple(map(lambda x: round(x, 3), rotate(vec, theta, phi))))
+    print(rotate_about((1, 1), 45, (0, 3)))
