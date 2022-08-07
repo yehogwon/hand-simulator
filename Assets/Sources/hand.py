@@ -11,8 +11,6 @@ from collections.abc import Iterable
 
 from utils import log
 
-ANGLE_CONST = 57.295779513082320876798154814105170332405472466564321549160243861
-
 LANDMAKR_NAMES = [
     'WRIST', 
     'THUMB_CMC', 
@@ -143,7 +141,32 @@ def process(info: dict):
         return math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
     
     origin_vector = info['WRIST']
+    scale_factor = 10 / dist3d(*info['WRIST'], *info['MIDDLE_FINGER_MCP'])
 
+    fingers_pos = [
+        info['THUMB_MCP'], 
+        info['THUMB_TIP'],
+        info['INDEX_FINGER_MCP'],
+        info['INDEX_FINGER_TIP'],
+        info['MIDDLE_FINGER_MCP'],
+        info['MIDDLE_FINGER_TIP'],
+        info['RING_FINGER_MCP'],
+        info['RING_FINGER_TIP'],
+        info['PINKY_MCP'],
+        info['PINKY_TIP'], 
+        info['WRIST']
+    ]
+
+    fingers_vectors = [vector(origin_vector, v) for v in fingers_pos]
+
+    plane_coords = [
+        info['WRIST'], 
+        info['THUMB_CMC'],
+        info['MIDDLE_FINGER_MCP']
+    ]
+    
+    # FIXME: Resolve some errors during the rotations
+    # calculate the plane that contains the coordinates in plane_coords
     d1 = dist2d(*info['RING_FINGER_MCP'][:2], *info['INDEX_FINGER_MCP'][:2])
     d1_x = info['RING_FINGER_MCP'][0] - info['INDEX_FINGER_MCP'][0]
     d1_y = info['RING_FINGER_MCP'][1] - info['INDEX_FINGER_MCP'][1]
@@ -154,30 +177,11 @@ def process(info: dict):
 
     theta_xy = -degree(math.acos(d1_x / d1)) * math.copysign(1, d1_y)
     theta_yz = degree(math.acos(d2_z / d2)) * math.copysign(1, d2_y) + 90
-
-    print(theta_xy, theta_yz)
-
-    fingers_pos = []
-    fingers_pos.append(info['THUMB_MCP'])
-    fingers_pos.append(info['THUMB_TIP'])
-    fingers_pos.append(info['INDEX_FINGER_MCP'])
-    fingers_pos.append(info['INDEX_FINGER_TIP'])
-    fingers_pos.append(info['MIDDLE_FINGER_MCP'])
-    fingers_pos.append(info['MIDDLE_FINGER_TIP'])
-    fingers_pos.append(info['RING_FINGER_MCP'])
-    fingers_pos.append(info['RING_FINGER_TIP'])
-    fingers_pos.append(info['PINKY_MCP'])
-    fingers_pos.append(info['PINKY_TIP'])
-    
-    # FIXME: Resolve some errors during the rotations
-    for i, finger in enumerate(fingers_pos): 
-        rot_xy = rotate_about(finger[:2], theta_xy, origin_vector[:2]) + (finger[2],)
-        rot_yz = (rot_xy[0],) + rotate_about(rot_xy[1:], theta_yz, origin_vector[1:])
-        fingers_pos[i] = rot_yz
     
     fingers_pos.append(origin_vector)
-    fingers_pos_proc = [vector(origin_vector, vec) for vec in fingers_pos]
-    proc = [item for tup in fingers_pos_proc for item in tup]
+    # fingers_pos_proc = [vector(origin_vector, rotate3d_about(vec, theta_xy, 0, 0, origin_vector)) for vec in fingers_pos]
+    fingers_pos_proc = fingers_vectors
+    proc = [item * scale_factor for tup in fingers_pos_proc for item in tup]
 
     return proc
 
@@ -188,10 +192,10 @@ def cos(x): # cos(x) for x in degree
     return math.cos(radian(x))
 
 def degree(radian): 
-    return radian * ANGLE_CONST
+    return math.degrees(radian)
 
 def radian(degree):
-    return degree / ANGLE_CONST
+    return math.radians(degree)
 
 # r: magnitude of the position vector, theta: angle measured from the y axis, phi: angle measured from the x axis
 def cartesian_to_spherical(x, y, z): 
@@ -215,11 +219,20 @@ def rotate(vec: Iterable, theta: float, phi: float):
     r, theta_, phi_ = cartesian_to_spherical(*vec)
     return spherical_to_cartesian(r, theta_ + theta, phi_ + phi)
 
-def rotate_about(vec: Iterable, theta: float, origin: Iterable=(0, 0)): 
+# the functions related to "rotation about a point (which is called origin)" is from: https://gaussian37.github.io/math-la-rotation_matrix/
+def rotate2d_about(vec: Iterable, theta: float, origin: Iterable=(0, 0)): 
     assert len(vec) == 2 and len(vec) == 2, "plane_vector() requires 2-dim vectors, but got vectors of strange shape. " 
     mat = np.array([[cos(theta), -sin(theta)], [sin(theta), cos(theta)]])
     mat_v = np.array([vec[0] - origin[0], vec[1] - origin[1]])
     return tuple(np.dot(mat, mat_v) + origin)
 
+def rotate3d_about(vec: Iterable, alpha: float, beta: float, gamma: float, origin: Iterable=(0, 0, 0)):
+    mat = np.array([
+        [cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma), cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)], 
+        [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma), sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)], 
+        [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
+    mat_v = np.array([vec[i] - origin[i] for i in range(3)])
+    return tuple(np.dot(mat, mat_v) + origin)
+
 if __name__ == '__main__': 
-    print(rotate_about((1, 1), 45, (0, 3)))
+    print(rotate2d_about((1, 1), 45, (0, 3)))
